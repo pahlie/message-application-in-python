@@ -1,0 +1,64 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Chat Room{% endblock %}
+
+{% block content %}
+    <h1 id="room-name"></h1>
+    <textarea id="chat-log" cols="100" rows="20" style="resize: none;"></textarea><br/>
+    <input id="message-input" type="text" size="100" placeholder="Enter message here..."><br/>
+    <input id="message-submit" type="button" value="Send">
+{% endblock %}
+
+{% block scripts %}
+<script type='text/javascript'>
+
+    // document nodes used in script
+    const chatLog = document.querySelector('#chat-log');
+    const roomNameNode = document.querySelector('#room-name');
+
+    var roomNameValue = {{ room_name_json }};
+
+    changeNodeText(roomNameNode, roomNameValue);
+
+    // helper function
+    function changeNodeText(node, text) {
+        node.innerText = text.trim();
+    } 
+
+    // websocket
+    var chatSocket = new WebSocket(
+        'ws://' + window.location.host + 
+        '/ws/chat/' + roomNameValue + '/'
+    );
+
+    // websocket listeners
+    chatSocket.onmessage = function(e) {
+        var data = JSON.parse(e.data);
+        var message = data['message'];
+        chatLog.value += (message + '\n');
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    // events listeners for message-input and message-submit
+    document.querySelector('#message-input').focus();
+    document.querySelector('#message-input').onkeyup = function(e) {
+        // check if enter key is enter/return
+        if (e.keycode === 13) {
+            document.querySelector('#message-submit').click();
+        }
+    }
+    document.querySelector('#message-submit').onclick = function(e) {
+        var messageInput = document.querySelector('#message-input');
+        var message = messageInput.value;
+        chatSocket.send(JSON.stringify({
+            'message': message
+        }));
+
+        messageInput.value = '';
+    }
+</script>
+{% endblock %}
