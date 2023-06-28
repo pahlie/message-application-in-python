@@ -1,4 +1,5 @@
-# Messaging App #
+# Messaging Application in Python Django 
+
 ### Frameworks ###
 * channels
 * channels_redis
